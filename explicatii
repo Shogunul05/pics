@@ -1,0 +1,97 @@
+# Explicația Proiectului - Editor de Imagini
+
+## Scopul General
+Proiectul este un **editor de imagini în linia de comandă** care lucrează cu formate NetPBM (PGM și PPM). Este o aplicație text-based care permite manipularea imaginilor fără interfață grafică.
+
+## Formatul de Imagini Suportat
+
+Programul lucrează cu **4 formate de imagini**:
+
+| Tip | Magic Word | Descriere |
+|-----|------------|-----------|
+| P2 | ASCII | Imagini grayscale (tonuri de gri) |
+| P3 | ASCII | Imagini color RGB |
+| P5 | Binary | Imagini grayscale (format binar) |
+| P6 | Binary | Imagini color RGB (format binar) |
+
+## Funcționalitățile Principale
+
+### 1. **Gestionarea Fișierelor**
+- **LOAD** - încarcă o imagine din fișier în memorie
+- **SAVE** - salvează imaginea (în format ASCII sau binary)
+- **EXIT** - închide programul și eliberează memoria
+
+### 2. **Selecția Zonelor**
+- **SELECT x1 y1 x2 y2** - selectează o regiune dreptunghiulară
+- **SELECT ALL** - selectează întreaga imagine
+- Toate operațiile ulterioare se aplică doar pe zona selectată
+
+### 3. **Transformări Geometrice**
+- **CROP** - taie imaginea la zona selectată
+- **ROTATE unghi** - rotește selecția (±90°, ±180°, ±270°, ±360°)
+  - Funcționează doar pe selecții pătratice sau pe imaginea întreagă
+
+### 4. **Filtre de Imagine (doar RGB)**
+**APPLY** cu următoarele opțiuni:
+- **EDGE** - detectează marginile
+- **SHARPEN** - accentuează detaliile
+- **BLUR** - face blur simplu
+- **GAUSSIAN_BLUR** - blur Gaussian
+
+Funcționează prin aplicarea unui **kernel 3×3** peste fiecare pixel:
+```
+Exemplu kernel EDGE:
+[-1 -1 -1]
+[-1  8 -1]
+[-1 -1 -1]
+```
+
+### 5. **Prelucrare Histogramă (doar grayscale)**
+- **HISTOGRAM x y** - afișează histograma cu:
+  - `x` = număr maxim de stelute (*)
+  - `y` = număr de bin-uri (putere de 2)
+  
+- **EQUALIZE** - egalizează histograma pentru a îmbunătăți contrastul
+  - Folosește formula: `f(a) = 255 × (1/Area) × Σ(H(i))`
+
+## Cum Funcționează Programul
+
+```
+1. Pornește fără parametri
+2. Citește comenzi de la stdin, câte una pe linie
+3. Pentru fiecare comandă:
+   - Execută operația
+   - Afișează mesaj de succes/eroare
+4. Continuă până la comanda EXIT
+```
+
+## Exemplu de Flux de Lucru
+
+```
+LOAD imagine.ppm          → Încarcă imaginea
+SELECT 10 10 50 50        → Selectează o zonă 40×40
+APPLY SHARPEN             → Aplică filtru de ascuțire
+SELECT ALL                → Selectează tot
+ROTATE 90                 → Rotește imaginea
+CROP                      → Taie la selecție
+SAVE rezultat.ppm ascii   → Salvează în format text
+EXIT                      → Închide programul
+```
+
+## Cerințe Tehnice Importante
+
+1. **Fără variabile globale**
+2. **Alocare dinamică** - imaginile mari trebuie gestionate eficient
+3. **Maxim 2 copii** ale imaginii în memorie simultan
+4. **Fără memory leaks** - verificat cu valgrind
+5. **Calcule cu double** - rotunjite cu `round()`
+6. **Clamp** pentru valori: `[0, 255]`
+
+## Structura Datelor din Codul Tău
+
+Din codul actual, programul folosește:
+- `int **imagine` - pentru imagini grayscale
+- `pixel **imagine_rgb` - pentru imagini color (struct cu r, g, b)
+- Variabile pentru dimensiuni, tip, selecție, etc.
+
+Ideea este că acest editor permite procesarea de bază a imaginilor (ca un Photoshop minimal în terminal), aplicând filtre, rotații și alte transformări pe fișiere PGM/PPM.
